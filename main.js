@@ -139,11 +139,18 @@ class NetworkGame {
 	}
 }
 
+const PORT = process.env.PORT || 3000;
+const INDEX = '/index.html';
+const express = require('express')
+const server = express()
+  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+
 const game = new NetworkGame()
 const http = require('http'); 
 const io = require('socket.io');
-const server = http.createServer();
-server.listen(8080, '0.0.0.0');
+// const server = http.createServer();
+// server.listen(80,'0.0.0.0');
 const serverSocket = io(server);
 
 
