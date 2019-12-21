@@ -4,7 +4,8 @@
   "description": "This is a viability test to use Node.js Websockets as the backend of Balloon wars",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js"
   },
   "repository": {
     "type": "git",
