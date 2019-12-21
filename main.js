@@ -4,16 +4,39 @@ const removeArrayItem = (arr, itemToRemove) => {
 
 
 class Position {
+
 	constructor(x, y) {
-		this._x = x
-		this._y = y
+		this.x = x
+		this.y = y
 	}
+
 }
 
 class Player {
 	constructor(id, position) {
-		this._id = id
-		this._position = position
+		this.id = id
+		this.position = position
+		this.direction = Math.random() * (Math.PI) * 2 //0
+		this.speed = 0.05
+	}
+
+	calcSpaceDelta(timeDelta, s0) {
+		return  this.speed*timeDelta
+	}
+
+	updatePosition(timeDelta) {
+
+		let newX = this.calcSpaceDelta(timeDelta, this.position.x)
+		let newY = this.calcSpaceDelta(timeDelta, this.position.y)
+
+		console.log("NN", newY, newX, this.position.x, this.position.y)
+
+		this.position.x += newX * Math.cos(this.direction)
+		this.position.y += newX * Math.sin(this.direction)
+	}
+
+	update(timeDelta) {
+		this.updatePosition(timeDelta)
 	}
 }
 
@@ -24,18 +47,45 @@ class Game {
 	}
 
 
-	update() {
-		console.log("Players are", this.players)
-		// this.players.forEach((item, index, arr) => )
+	update(timeDelta) {
+		this.players.forEach(function (player) {
+			player.update(timeDelta)
+		})
+
+
+		this.players.forEach(function (player) {
+			console.log("Player is", player.id, player.position.x, player.position.y, player.direction)
+		})
+
+		console.log("-----------------------------")
 	}
 
 	addPlayer(player) {
 		this.players.push(player)
 	}
 
-	removePlayer(player){
-		this.players = this.players.filter((p) => p._id !== player._id)
+	removePlayer(playerId){
+		this.players = this.players.filter((p) => p.id !== playerId)
 	}
+
+	updatePlayerDirection(playerId, to) {
+		this.players.forEach(function (player) {
+			console.log("DD", player.id, playerId)
+			if( player.id === playerId) {
+				console.log("DD", playerId, to)
+				player.direction = to
+			}	
+		})
+	}
+
+	updatePlayerSpeed(playerId, to) {
+		this.players.forEach(function (player) {
+			if( player.id === playerId) {
+				player.speed = to
+			}	
+		})
+	}
+
 
 }
 
@@ -50,9 +100,12 @@ class NetworkGame {
 
 
 	getUpdatedGame() {
-		this.game.update()
+		let newTime = new Date()
+		let timeDelta = Math.abs(newTime - this.lastUpdate)
+		this.game.update(timeDelta)
 
-		console.log("Connections are", this.connections)
+		console.log("TT", newTime, timeDelta, this.lastUpdate)
+		this.lastUpdate = newTime
 	}
 
 	parseGame() {
@@ -60,30 +113,26 @@ class NetworkGame {
 	}
 
 	playerJoined(socket) {
-		console.log("CORNO 	ENTROU")
-		const newPlayer = new Player(this.currentPlayerId, new Position(0, 0))
+		console.log("CORNO 	ENTROU", socket.id)
+		const newPlayer = new Player( socket.id, new Position(0, 0))
 
 		this.game.addPlayer(newPlayer)
+	}
 
-		this.currentPlayerId += 1
-
-		return newPlayer._id
-	
-}
 	playerLeft(id) {
 		console.log("CORNO 	SAIU", id)
-		const leftPlayer = this.connections.socket
 
-		this.game.players.forEach( (player, index, _) => {
-			if(player._id === id) {
-				console.log("Brow to saindo fora")
-				this.game.removePlayer(player)
+		this.game.removePlayer(id)
+	}
 
-			}
-		}
-		)
+	playerChangedDirection(id, to) {
+		console.log("Direction changed", to, id)
+		this.game.updatePlayerDirection(id, to)
+	}
 
-
+	playerChangedSpeed(id, to) {
+		console.log("Direction changed", to, id)
+		this.game.updatePlayerSpeed(id, to)
 	}
 }
 
@@ -96,18 +145,28 @@ const serverSocket = io(server);
 
 
 serverSocket.on('connection', (clientSocket) => {
-	let newPlayerId = game.playerJoined(clientSocket)
+	let newPlayerId = clientSocket.id
+	game.playerJoined(clientSocket)
+
+	clientSocket.on('directionChanged', (msg) => {
+		game.playerChangedDirection(newPlayerId, msg)
+	});
+
+
+	clientSocket.on('speedChanged', (msg) => {
+		game.playerChangedSpeed(newPlayerId, msg)
+	});
+
 	clientSocket.on('disconnect', () => game.playerLeft(newPlayerId));
-});
-
-serverSocket.on('directionChanged', (clientSocket) => {
 
 });
+
+
 
 // setInterval(() => socket.emit('time', new Date().toTimeString()), 1000);
 
-
-setInterval(updateGame, 1000);
+let updateFrequecy = 1 //64
+setInterval(updateGame, 1000 / updateFrequecy);
 
 
 function updateGame() {
