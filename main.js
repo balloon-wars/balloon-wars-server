@@ -29,7 +29,7 @@ class Player {
 		let newX = this.calcSpaceDelta(timeDelta, this.position.x)
 		let newY = this.calcSpaceDelta(timeDelta, this.position.y)
 
-		// console.log("NN", newY, newX, this.position.x, this.position.y)
+		// console.log("NN", newY, newX, this.position.x, this.position.y, this.speed)
 
 		this.position.x += newX * Math.cos(this.direction)
 		this.position.y += newX * Math.sin(this.direction)
@@ -72,17 +72,18 @@ class Game {
 		this.players.forEach(function (player) {
 			// console.log("DD", player.id, playerId)
 			if( player.id === playerId) {
-				console.log("DD", playerId, to)
+				// console.log("DD", playerId, to)
 				player.direction = to
 			}	
 		})
 	}
 
 	updatePlayerSpeed(playerId, to) {
+		// console.log("Updating speed")
 		this.players.forEach(function (player) {
 			if( player.id === playerId) {
 				player.speed = to
-				console.log("SS", playerId, to)
+				// console.log("SS", playerId, to)
 			}	
 		})
 	}
@@ -107,7 +108,7 @@ class NetworkGame {
 		// console.log("TT", newTime, timeDelta, this.lastUpdate)
 		this.lastUpdate = newTime
 
-
+		return this.parseGame()
 	}
 
 	parseGame() {
@@ -117,15 +118,13 @@ class NetworkGame {
 	}
 
 	playerJoined(socket) {
-		// console.log("CORNO 	ENTROU", socket.id)
+		console.log("CORNO 	ENTROU", socket.id)
 		const newPlayer = new Player( socket.id, new Position(0, 0))
 
 		this.game.addPlayer(newPlayer)
 	}
 
 	playerLeft(id) {
-		// console.log("CORNO 	SAIU", id)
-
 		this.game.removePlayer(id)
 	}
 
@@ -169,13 +168,12 @@ serverSocket.on('connection', (clientSocket) => {
 
 // setInterval(() => socket.emit('time', new Date().toTimeString()), 1000);
 
-let updateFrequecy = 64
+let updateFrequecy = 128
 setInterval(updateGame, 1000 / updateFrequecy);
 
 
 function updateGame() { 
-	game.getUpdatedGame()
-	let newGame = game.parseGame()
+	let newGame = game.getUpdatedGame()
 	// console.log("New game is", newGame)
 	serverSocket.emit('gameUpdate', newGame);
 }
