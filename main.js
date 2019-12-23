@@ -19,7 +19,7 @@ class Needle {
 		this.offset = new Position(0, 0)
 		this.accDeltaTime = 0
 		this.isAttacking = false
-		this.movementLenght = 10
+		this.movementLenght = 2
 		this.movementDuration = 2000
 		// this.radius = 20
 	}
