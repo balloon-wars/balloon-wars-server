@@ -19,8 +19,8 @@ class Needle {
 		this.offset = new Position(0, 0)
 		this.accDeltaTime = 0
 		this.isAttacking = false
-		this.movementLenght = 20
-		this.movementDuration = 1000
+		this.movementLenght = 100
+		this.movementDuration = 2000
 		// this.radius = 20
 	}
 
@@ -30,37 +30,52 @@ class Needle {
 		this.isAttacking = false
 	}
 
-	update(timeDelta, position) {
+	update(timeDelta, player) {
 		// console.log("Setting position to", position)
-		// if(!this.isAttacking){
+		let position = player.getNeedlePosition()
+		if(!this.isAttacking){
 			this.position = position
 			return 
-		// }
+		}
 
 		if (this.accDeltaTime > this.movementDuration) {
 			this.resetNeedle()
 			return
 		}
 
-		this.position = this.getNeedlePosition(position)
+		this.position = this.getAttackingNeedlePosition(player)
 		this.accDeltaTime += timeDelta
 	}
 
+	getNeedleOffset() {
 
-	getNeedlePosition(playerPos) {
-		let completion = this.accDeltaTime / this.movementDuration
-		var multiplier
-		if (completion < 0.5) {
-			multiplier = completion * 2
-		} else {
-			multiplier = completion - 2*(completion - 0.5)
+		if (this.accDeltaTime < (this.movementDuration / 2)) {
+			return this.movementLenght * (this.accDeltaTime / (this.movementDuration / 2))
+			return this.movementLenght - (1 - (this.accDeltaTime / (this.movementDuration / 2)))
 		}
 
-		let needleX = playerPos.x + (this.movementLenght * multiplier)
-		let needleY = playerPos.y + this.movementLenght * multiplier
-		
-		this.offset.x = this.movementLenght * multiplier
-		this.offset.y = this.movementLenght * multiplier
+		return ((this.accDeltaTime / this.movementDuration) - 0.5 ) * (-1 * this.movementLenght)
+
+		return - this.movementLenght - (1 - ((this.accDeltaTime - 0.5) / (this.movementDuration / 2)))
+		// let multiplier = this.accDeltaTime / (this.movementDuration / 2)
+		// if (multiplier > 0.5) {
+		// 	// multiplier -= 0.5
+		// 	multiplier *= -1
+		// } 
+		// multiplier = 1 - multiplier
+
+
+
+		return this.movementLenght * multiplier
+
+	}
+
+	getAttackingNeedlePosition(player) {
+		let offset = this.getNeedleOffset()
+
+		console.log("Offset is", offset)
+		let needleX = player.getNeedlePosition().x + offset * Math.cos(player.direction)
+		let needleY = player.getNeedlePosition().y + offset * Math.sin(player.direction)
 
 		// console.log("Completion is", completion, needleX, needleY)
 
@@ -79,7 +94,7 @@ class Player {
 		this.radius = 100
 		// let needlePos = new Position(position.x, position.y + this.radius / 2)
 		// let needlePos = new Position(0, 0)
-		let needlePos = this.getNeedleBaseOffset()
+		let needlePos = this.getNeedlePosition()
 		this.needle = new Needle(needlePos)
 	
 	}
@@ -99,16 +114,11 @@ class Player {
 
 	update(timeDelta) {
 		this.updatePosition(timeDelta)
-		this.needle.update(timeDelta, this.getNeedlePosition())
-		// this.needle.offset = this.getNeedleBaseOffset()
+		this.needle.update(timeDelta, this)
 	}
 
 	attack() {
 		this.needle.isAttacking = true
-	}
-
-	getNeedleBaseOffset() {
-		return new Position(this.radius * Math.cos(this.direction), this.radius * Math.sin(this.direction))
 	}
 
 	getNeedlePosition() {
