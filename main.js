@@ -19,7 +19,7 @@ class Needle {
 		this.offset = new Position(0, 0)
 		this.accDeltaTime = 0
 		this.isAttacking = false
-		this.movementLenght = 100
+		this.movementLenght = 10
 		this.movementDuration = 2000
 		// this.radius = 20
 	}
@@ -51,35 +51,31 @@ class Needle {
 
 		if (this.accDeltaTime < (this.movementDuration / 2)) {
 			return this.movementLenght * (this.accDeltaTime / (this.movementDuration / 2))
-			return this.movementLenght - (1 - (this.accDeltaTime / (this.movementDuration / 2)))
 		}
 
-		return ((this.accDeltaTime / this.movementDuration) - 0.5 ) * (-1 * this.movementLenght)
-
-		return - this.movementLenght - (1 - ((this.accDeltaTime - 0.5) / (this.movementDuration / 2)))
-		// let multiplier = this.accDeltaTime / (this.movementDuration / 2)
-		// if (multiplier > 0.5) {
-		// 	// multiplier -= 0.5
-		// 	multiplier *= -1
-		// } 
-		// multiplier = 1 - multiplier
-
-
-
-		return this.movementLenght * multiplier
-
+		return ((this.accDeltaTime / (this.movementDuration)) - 0.5 ) * (-1 * this.movementLenght) * 2
 	}
 
 	getAttackingNeedlePosition(player) {
 		let offset = this.getNeedleOffset()
 
 		console.log("Offset is", offset)
-		let needleX = player.getNeedlePosition().x + offset * Math.cos(player.direction)
-		let needleY = player.getNeedlePosition().y + offset * Math.sin(player.direction)
+		if (this.timeDelta < this.movementDuration / 2) {
+			let needleX = player.getNeedlePosition().x + offset * Math.cos(player.direction)
+			let needleY = player.getNeedlePosition().y + offset * Math.sin(player.direction)
 
-		// console.log("Completion is", completion, needleX, needleY)
+			// console.log("Completion is", completion, needleX, needleY)
 
-		return new Position(needleX, needleY)
+			return new Position(needleX, needleY)
+		}
+
+
+			let needleX = this.position.x + offset * Math.cos(player.direction)
+			let needleY = this.position.y + offset * Math.sin(player.direction)
+
+			// console.log("Completion is", completion, needleX, needleY)
+
+			return new Position(needleX, needleY)
 	}
 
 }
