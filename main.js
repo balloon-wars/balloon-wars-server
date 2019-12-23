@@ -6,19 +6,20 @@ const removeArrayItem = (arr, itemToRemove) => {
 class Position {
 
 	constructor(x, y) {
-		this.x = x
-		this.y = y
+		this.x = Number(x)
+		this.y = Number(y)
 	}
 
 }
 
 class Needle {
 	constructor(position) {
+		console.log("Creating needle", position)
 		this.position = position
 		this.offset = new Position(0, 0)
 		this.accDeltaTime = 0
 		this.isAttacking = false
-		this.movementLenght = 2
+		this.movementLenght = 20
 		this.movementDuration = 1000
 	}
 
@@ -29,20 +30,21 @@ class Needle {
 	}
 
 	update(timeDelta, position) {
-		if(!this.isAttacking){
+		// console.log("Setting position to", position)
+		// if(!this.isAttacking){
 			this.position = position
 			return 
-		}
+		// }
 
-		if this.accDeltaTime > this.movementDuration {
+		if (this.accDeltaTime > this.movementDuration) {
 			this.resetNeedle()
 			return
 		}
 
-		this.position = getNeedlePosition(position)
-
+		this.position = this.getNeedlePosition(position)
 		this.accDeltaTime += timeDelta
 	}
+
 
 	getNeedlePosition(playerPos) {
 		let completion = this.accDeltaTime / this.movementDuration
@@ -53,8 +55,13 @@ class Needle {
 			multiplier = completion - 2*(completion - 0.5)
 		}
 
-		let needleX = playerPos.x + this.movementLenght * multiplier
-		let needleY = playerPos.Y + this.movementLenght * multiplier
+		let needleX = playerPos.x + (this.movementLenght * multiplier)
+		let needleY = playerPos.y + this.movementLenght * multiplier
+		
+		this.offset.x = this.movementLenght * multiplier
+		this.offset.y = this.movementLenght * multiplier
+
+		// console.log("Completion is", completion, needleX, needleY)
 
 		return new Position(needleX, needleY)
 	}
@@ -65,10 +72,13 @@ class Player {
 	constructor(id, position) {
 		this.id = id
 		this.position = position
-		this.direction = Math.random() * (Math.PI) * 2 //0
+		this.direction = (Math.PI) / 2 //0
 		this.speed = 0 //0.05
-		this.radius = 2
-		this.needle = new Needle(this.getNeedlePosition())
+		this.radius = 200
+		// let needlePos = new Position(position.x, position.y + this.radius / 2)
+		// let needlePos = new Position(0, 0)
+		let needlePos = this.getNeedleBaseOffset()
+		this.needle = new Needle(needlePos)
 	
 	}
 
@@ -87,16 +97,23 @@ class Player {
 
 	update(timeDelta) {
 		this.updatePosition(timeDelta)
-		this.needle.update(timeDelta, this.getNeedlePosition())
-		
+		this.needle.update(timeDelta, this.getNeedleBaseOffset())
+		this.needle.offset = this.getNeedleBaseOffset()
 	}
 
 	attack() {
 		this.needle.isAttacking = true
 	}
 
+	getNeedleBaseOffset() {
+		return new Position(this.radius * Math.cos(this.direction), this.radius * Math.sin(this.direction))
+	}
+
 	getNeedlePosition() {
-		return new Position(this.position.x + this.radius * Math.cos(this.direction.x), this.position.y + this.radius * Math.sin(this.direction.y) )
+		return this.getNeedleBaseOffset()
+		// return new Position(0, 0)
+		// console.log("NEEDLE POSITION", this.position.x, this.radius, Math.cos(this.direction), this.position.y, this.radius , Math.sin(this.direction) )
+		return new Position(this.position.x + this.radius - Math.PI , this.position.y + this.radius - Math.PI)
 	}
 }
 
@@ -184,7 +201,8 @@ class NetworkGame {
 
 	parseGame() {
 		return JSON.stringify(this, function(key, val) {
-    		return val.toFixed ? Number(val.toFixed(6)) : val;
+			return val
+    		return val.toFixed ? Number(val.toFixed(6)) : (val);
 		}) 
 	}
 
@@ -210,6 +228,7 @@ class NetworkGame {
 	}
 
 	playerAttacked(id) {
+		console.log(id, "attacked")
 		this.game.updatePlayerAttack(id)
 	} 
 }
