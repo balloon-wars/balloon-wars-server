@@ -61,8 +61,8 @@ class Needle {
 
 		console.log("Offset is", offset)
 		if (this.timeDelta < this.movementDuration / 2) {
-			let needleX = player.getNeedlePosition().x + offset * Math.cos(player.direction)
-			let needleY = player.getNeedlePosition().y + offset * Math.sin(player.direction)
+			let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
+			let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
 
 			// console.log("Completion is", completion, needleX, needleY)
 
@@ -70,8 +70,8 @@ class Needle {
 		}
 
 
-			let needleX = this.position.x + offset * Math.cos(player.direction)
-			let needleY = this.position.y + offset * Math.sin(player.direction)
+			let needleX = this.position.x + (offset * Math.cos(player.direction))
+			let needleY = this.position.y + (offset * Math.sin(player.direction))
 
 			// console.log("Completion is", completion, needleX, needleY)
 
