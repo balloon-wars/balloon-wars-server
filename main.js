@@ -105,7 +105,7 @@ class Player {
 		let newY = this.calcSpaceDelta(timeDelta, this.position.y)
 
 		this.position.x += newX * Math.cos(this.direction)
-		this.position.y += newX * Math.sin(this.direction)
+		this.position.y += newY * Math.sin(this.direction)
 	}
 
 	update(timeDelta) {
