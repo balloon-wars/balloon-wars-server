@@ -21,6 +21,7 @@ class Needle {
 		this.isAttacking = false
 		this.movementLenght = 20
 		this.movementDuration = 1000
+		// this.radius = 20
 	}
 
 	resetNeedle() {
@@ -74,7 +75,8 @@ class Player {
 		this.position = position
 		this.direction = (Math.PI) / 2 //0
 		this.speed = 0 //0.05
-		this.radius = 200
+		this.diameter = 200
+		this.radius = 100
 		// let needlePos = new Position(position.x, position.y + this.radius / 2)
 		// let needlePos = new Position(0, 0)
 		let needlePos = this.getNeedleBaseOffset()
@@ -97,8 +99,8 @@ class Player {
 
 	update(timeDelta) {
 		this.updatePosition(timeDelta)
-		this.needle.update(timeDelta, this.getNeedleBaseOffset())
-		this.needle.offset = this.getNeedleBaseOffset()
+		this.needle.update(timeDelta, this.getNeedlePosition())
+		// this.needle.offset = this.getNeedleBaseOffset()
 	}
 
 	attack() {
@@ -110,10 +112,10 @@ class Player {
 	}
 
 	getNeedlePosition() {
-		return this.getNeedleBaseOffset()
+		// return this.getNeedleBaseOffset()
 		// return new Position(0, 0)
 		// console.log("NEEDLE POSITION", this.position.x, this.radius, Math.cos(this.direction), this.position.y, this.radius , Math.sin(this.direction) )
-		return new Position(this.position.x + this.radius - Math.PI , this.position.y + this.radius - Math.PI)
+		return new Position(this.position.x + (this.radius * Math.cos(this.direction) ) , this.position.y + (this.radius * Math.sin(this.direction)) )
 	}
 }
 
