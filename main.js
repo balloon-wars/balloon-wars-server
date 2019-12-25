@@ -6,8 +6,79 @@ const removeArrayItem = (arr, itemToRemove) => {
 class Position {
 
 	constructor(x, y) {
-		this.x = x
-		this.y = y
+		this.x = Number(x)
+		this.y = Number(y)
+	}
+
+}
+
+class Needle {
+	constructor(position) {
+		console.log("Creating needle", position)
+		this.position = position
+		this.offset = new Position(0, 0)
+		this.accDeltaTime = 0
+		this.isAttacking = false
+		this.movementLenght = 100
+		this.movementDuration = 2000
+		// this.radius = 20
+	}
+
+	resetNeedle() {
+		this.accDeltaTime = 0
+		this.offset = new Position(0, 0)
+		this.isAttacking = false
+	}
+
+	update(timeDelta, player) {
+		// console.log("Setting position to", position)
+		let position = player.getNeedlePosition()
+		if(!this.isAttacking){
+			this.position = position
+			return 
+		}
+
+		if (this.accDeltaTime > this.movementDuration) {
+			this.resetNeedle()
+			return
+		}
+
+		this.position = this.getAttackingNeedlePosition(player)
+		this.accDeltaTime += timeDelta
+	}
+
+	getNeedleOffset() {
+
+		if (this.accDeltaTime < (this.movementDuration / 2)) {
+			return this.movementLenght * (this.accDeltaTime / (this.movementDuration / 2))
+		}
+
+		return ((this.accDeltaTime / (this.movementDuration)) - 0.5 ) * (-1 * this.movementLenght) * 2
+	}
+
+	getAttackingNeedlePosition(player) {
+		var offset = this.getNeedleOffset()
+
+		if (this.accDeltaTime < this.movementDuration / 2) {
+			let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
+			let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
+
+			console.log("Offset is", needleX, needleY)
+			return new Position(needleX, needleY)
+		}
+
+
+		// let needleX = this.position.x + (offset * Math.cos(player.direction))
+		// let needleY = this.position.y + (offset * Math.sin(player.direction))
+		offset += this.movementLenght
+
+		let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
+		let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
+
+		console.log("-Offset is", needleX, needleY)
+		// console.log("Completion is", completion, needleX, needleY)
+
+		return new Position(needleX, needleY)
 	}
 
 }
@@ -16,8 +87,15 @@ class Player {
 	constructor(id, position) {
 		this.id = id
 		this.position = position
-		this.direction = Math.random() * (Math.PI) * 2 //0
+		this.direction = (Math.PI) / 2 //0
 		this.speed = 0 //0.05
+		this.diameter = 200
+		this.radius = 100
+		// let needlePos = new Position(position.x, position.y + this.radius / 2)
+		// let needlePos = new Position(0, 0)
+		let needlePos = this.getNeedlePosition()
+		this.needle = new Needle(needlePos)
+	
 	}
 
 	calcSpaceDelta(timeDelta, s0) {
@@ -29,14 +107,24 @@ class Player {
 		let newX = this.calcSpaceDelta(timeDelta, this.position.x)
 		let newY = this.calcSpaceDelta(timeDelta, this.position.y)
 
-		// console.log("NN", newY, newX, this.position.x, this.position.y, this.speed)
-
 		this.position.x += newX * Math.cos(this.direction)
-		this.position.y += newX * Math.sin(this.direction)
+		this.position.y += newY * Math.sin(this.direction)
 	}
 
 	update(timeDelta) {
 		this.updatePosition(timeDelta)
+		this.needle.update(timeDelta, this)
+	}
+
+	attack() {
+		this.needle.isAttacking = true
+	}
+
+	getNeedlePosition() {
+		// return this.getNeedleBaseOffset()
+		// return new Position(0, 0)
+		// console.log("NEEDLE POSITION", this.position.x, this.radius, Math.cos(this.direction), this.position.y, this.radius , Math.sin(this.direction) )
+		return new Position(this.position.x + (this.radius * Math.cos(this.direction) ) , this.position.y + (this.radius * Math.sin(this.direction)) )
 	}
 }
 
@@ -88,6 +176,17 @@ class Game {
 		})
 	}
 
+	updatePlayerAttack(playerId) {
+		this.players.forEach(function (player) {
+			// console.log("DD", player.id, playerId)
+			if( player.id === playerId) {
+				// console.log("DD", playerId, to)
+				player.attack()
+			}	
+		})
+
+	}
+
 
 }
 
@@ -113,7 +212,8 @@ class NetworkGame {
 
 	parseGame() {
 		return JSON.stringify(this, function(key, val) {
-    		return val.toFixed ? Number(val.toFixed(6)) : val;
+			return val
+    		return val.toFixed ? Number(val.toFixed(6)) : (val);
 		}) 
 	}
 
@@ -137,9 +237,14 @@ class NetworkGame {
 		// console.log("Direction changed", to, id)
 		this.game.updatePlayerSpeed(id, to)
 	}
+
+	playerAttacked(id) {
+		console.log(id, "attacked")
+		this.game.updatePlayerAttack(id)
+	} 
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 const INDEX = '/index.html';
 const express = require('express')
 const server = express()
@@ -165,6 +270,10 @@ serverSocket.on('connection', (clientSocket) => {
 
 	clientSocket.on('speedChanged', (msg) => {
 		game.playerChangedSpeed(newPlayerId, msg)
+	});
+
+	clientSocket.on('startAttack', (msg) => {
+		game.playerAttacked(newPlayerId)
 	});
 
 	clientSocket.on('disconnect', () => game.playerLeft(newPlayerId));
