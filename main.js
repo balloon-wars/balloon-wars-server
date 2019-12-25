@@ -19,7 +19,7 @@ class Needle {
 		this.offset = new Position(0, 0)
 		this.accDeltaTime = 0
 		this.isAttacking = false
-		this.movementLenght = 2
+		this.movementLenght = 100
 		this.movementDuration = 2000
 		// this.radius = 20
 	}
@@ -57,25 +57,28 @@ class Needle {
 	}
 
 	getAttackingNeedlePosition(player) {
-		let offset = this.getNeedleOffset()
+		var offset = this.getNeedleOffset()
 
-		console.log("Offset is", offset)
-		if (this.timeDelta < this.movementDuration / 2) {
+		if (this.accDeltaTime < this.movementDuration / 2) {
 			let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
 			let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
 
-			// console.log("Completion is", completion, needleX, needleY)
-
+			console.log("Offset is", needleX, needleY)
 			return new Position(needleX, needleY)
 		}
 
 
-			let needleX = this.position.x + (offset * Math.cos(player.direction))
-			let needleY = this.position.y + (offset * Math.sin(player.direction))
+		// let needleX = this.position.x + (offset * Math.cos(player.direction))
+		// let needleY = this.position.y + (offset * Math.sin(player.direction))
+		offset += this.movementLenght
 
-			// console.log("Completion is", completion, needleX, needleY)
+		let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
+		let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
 
-			return new Position(needleX, needleY)
+		console.log("-Offset is", needleX, needleY)
+		// console.log("Completion is", completion, needleX, needleY)
+
+		return new Position(needleX, needleY)
 	}
 
 }
@@ -241,7 +244,7 @@ class NetworkGame {
 	} 
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 const INDEX = '/index.html';
 const express = require('express')
 const server = express()
