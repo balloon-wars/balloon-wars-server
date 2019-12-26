@@ -22,6 +22,7 @@ class Needle {
 		this.movementLenght = 100
 		this.movementDuration = 2000
 		this.radius = 20
+		this.attackPower = 10
 	}
 
 	resetNeedle() {
@@ -83,8 +84,7 @@ class Player {
 		this.speed = 0 //0.05
 		this.diameter = 200
 		this.radius = this.diameter / 2
-		// let needlePos = new Position(position.x, position.y + this.radius / 2)
-		// let needlePos = new Position(0, 0)
+		this.life = 20
 		let needlePos = this.getBaseNeedlePosition()
 		this.needle = new Needle(needlePos)
 	
@@ -112,10 +112,11 @@ class Player {
 		this.needle.isAttacking = true
 	}
 
+	onDamage(needle) {
+		this.life -= needle.attackPower
+	}
+
 	getBaseNeedlePosition() {
-		// return this.getNeedleBaseOffset()
-		// return new Position(0, 0)
-		// console.log("NEEDLE POSITION", this.position.x, this.radius, Math.cos(this.direction), this.position.y, this.radius , Math.sin(this.direction) )
 		return new Position(this.position.x + (this.radius * Math.cos(this.direction) ) , this.position.y + (this.radius * Math.sin(this.direction)) )
 	}
 }
@@ -148,7 +149,7 @@ class Game {
 			let thresholdDistance = needleRadius + playerRadius
 
 			if (absDistance < thresholdDistance) {
-				console.log("Player died absDistance", player.id, thresholdDistance, absDistance)
+				player.onDamage(p.needle)
 			}
 
 			// if (xDistance < thresholdDistance && yDistance < thresholdDistance) {
