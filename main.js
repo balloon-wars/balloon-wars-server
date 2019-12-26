@@ -21,7 +21,7 @@ class Needle {
 		this.isAttacking = false
 		this.movementLenght = 100
 		this.movementDuration = 2000
-		// this.radius = 20
+		this.radius = 20
 	}
 
 	resetNeedle() {
@@ -32,7 +32,7 @@ class Needle {
 
 	update(timeDelta, player) {
 		// console.log("Setting position to", position)
-		let position = player.getNeedlePosition()
+		let position = player.getBaseNeedlePosition()
 		if(!this.isAttacking){
 			this.position = position
 			return 
@@ -60,23 +60,15 @@ class Needle {
 		var offset = this.getNeedleOffset()
 
 		if (this.accDeltaTime < this.movementDuration / 2) {
-			let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
-			let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
+			let needleX = player.getBaseNeedlePosition().x + (offset * Math.cos(player.direction))
+			let needleY = player.getBaseNeedlePosition().y + (offset * Math.sin(player.direction))
 
-			console.log("Offset is", needleX, needleY)
 			return new Position(needleX, needleY)
 		}
-
-
-		// let needleX = this.position.x + (offset * Math.cos(player.direction))
-		// let needleY = this.position.y + (offset * Math.sin(player.direction))
 		offset += this.movementLenght
 
-		let needleX = player.getNeedlePosition().x + (offset * Math.cos(player.direction))
-		let needleY = player.getNeedlePosition().y + (offset * Math.sin(player.direction))
-
-		console.log("-Offset is", needleX, needleY)
-		// console.log("Completion is", completion, needleX, needleY)
+		let needleX = player.getBaseNeedlePosition().x + (offset * Math.cos(player.direction))
+		let needleY = player.getBaseNeedlePosition().y + (offset * Math.sin(player.direction))
 
 		return new Position(needleX, needleY)
 	}
@@ -90,10 +82,10 @@ class Player {
 		this.direction = (Math.PI) / 2 //0
 		this.speed = 0 //0.05
 		this.diameter = 200
-		this.radius = 100
+		this.radius = this.diameter / 2
 		// let needlePos = new Position(position.x, position.y + this.radius / 2)
 		// let needlePos = new Position(0, 0)
-		let needlePos = this.getNeedlePosition()
+		let needlePos = this.getBaseNeedlePosition()
 		this.needle = new Needle(needlePos)
 	
 	}
@@ -120,7 +112,7 @@ class Player {
 		this.needle.isAttacking = true
 	}
 
-	getNeedlePosition() {
+	getBaseNeedlePosition() {
 		// return this.getNeedleBaseOffset()
 		// return new Position(0, 0)
 		// console.log("NEEDLE POSITION", this.position.x, this.radius, Math.cos(this.direction), this.position.y, this.radius , Math.sin(this.direction) )
@@ -134,18 +126,48 @@ class Game {
 		this.players = []
 	}
 
-
-	update(timeDelta) {
+	updatePlayers(timeDelta) {
 		this.players.forEach(function (player) {
 			player.update(timeDelta)
 		})
+	}
 
+	checkDeath(player) {
+		this.players.forEach(function (p) {
+			if (p.id === player.id) { return }
+			let needlePos = p.needle.position
+			let needleRadius = p.needle.radius
 
-		this.players.forEach(function (player) {
-			// console.log("Player is", player.id, player.position.x, player.position.y, player.direction)
+			let playerRadius = player.radius
+			let playerPos = player.position
+
+			let xDistance = Math.abs(playerPos.x - needlePos.x)
+			let yDistance = Math.abs(playerPos.y - needlePos.y)
+			let absDistance = Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2))
+
+			let thresholdDistance = needleRadius + playerRadius
+
+			if (absDistance < thresholdDistance) {
+				console.log("Player died absDistance", player.id, thresholdDistance, absDistance)
+			}
+
+			// if (xDistance < thresholdDistance && yDistance < thresholdDistance) {
+			// 	// console.log("Player died on comp", player.id, xDistance, yDistance, thresholdDistance)
+			// }
+
+			// console.log("--", player.id, thresholdDistance, absDistance, xDistance, yDistance)
 		})
+	}
 
-		// console.log("-----------------------------")
+	checkDeaths() {
+		this.players.forEach( (player) => {
+			this.checkDeath(player)
+		})
+	}
+
+	update(timeDelta) {
+		this.updatePlayers(timeDelta)
+		this.checkDeaths()
 	}
 
 	addPlayer(player) {
@@ -184,10 +206,7 @@ class Game {
 				player.attack()
 			}	
 		})
-
 	}
-
-
 }
 
 class NetworkGame {
@@ -243,6 +262,8 @@ class NetworkGame {
 		this.game.updatePlayerAttack(id)
 	} 
 }
+
+
 
 const PORT = process.env.PORT || 5000;
 const INDEX = '/index.html';
