@@ -86,6 +86,7 @@ class Player {
 		this.radius = this.diameter / 2
 		this.life = 20
 		this.isDead = false
+		this.hasBeenHit = false
 		this.needle = new Needle(this.getBaseNeedlePosition())
 	
 	}
@@ -120,10 +121,14 @@ class Player {
 	}
 
 	onDamage(needle) {
+		if (this.hasBeenHit) { return }
 		this.life -= needle.attackPower
-		if (this.life <= 0) {
-			this.isDead = true
-		}
+		this.hasBeenHit = true
+
+		if (this.life > 0) { return }
+
+		this.isDead = true
+
 	}
 
 	getBaseNeedlePosition() {
@@ -165,7 +170,10 @@ class Game {
 			let thresholdDistance = needleRadius + playerRadius
 
 			if (absDistance < thresholdDistance) {
+				if (player.hasBeenHit ) { return }
 				player.onDamage(p.needle)
+			} else {
+				player.hasBeenHit = false
 			}
 		})
 	}
