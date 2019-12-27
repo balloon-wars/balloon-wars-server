@@ -82,8 +82,10 @@ class Player {
 		this.position = position
 		this.direction = (Math.PI) / 2 //0
 		this.speed = 0 //0.05
+		this.scale = 1
 		this.diameter = 200
-		this.radius = this.diameter / 2
+		// this.radius = this.diameter / 2
+		this.baseLife = 20
 		this.life = 20
 		this.isDead = false
 		this.hasBeenHit = false
@@ -104,14 +106,20 @@ class Player {
 		this.position.y += newY * Math.sin(this.direction)
 	}
 
+	updateScale() {
+		this.scale = this.life / this.baseLife
+	}
+
 	update(timeDelta) {
 		this.updatePosition(timeDelta)
+		this.updateScale()
 		this.needle.update(timeDelta, this)
 	}
 
 	respawn(pos) {
 		this.position = pos
 		this.life = 20
+		this.scale = 1
 		this.isDead = false
 		console.log("Respawned", this)
 	}
@@ -132,7 +140,11 @@ class Player {
 	}
 
 	getBaseNeedlePosition() {
-		return new Position(this.position.x + (this.radius * Math.cos(this.direction) ) , this.position.y + (this.radius * Math.sin(this.direction)) )
+		return new Position(this.position.x + (this.getRadius() * Math.cos(this.direction) ) , this.position.y + (this.getRadius() * Math.sin(this.direction)) )
+	}
+
+	getRadius() {
+		return this.diameter * this.scale / 2
 	}
 }
 
@@ -160,7 +172,7 @@ class Game {
 			let needlePos = p.needle.position
 			let needleRadius = p.needle.radius
 
-			let playerRadius = player.radius
+			let playerRadius = player.getRadius()
 			let playerPos = player.position
 
 			let xDistance = Math.abs(playerPos.x - needlePos.x)
