@@ -85,8 +85,8 @@ class Player {
 		this.diameter = 200
 		this.radius = this.diameter / 2
 		this.life = 20
-		let needlePos = this.getBaseNeedlePosition()
-		this.needle = new Needle(needlePos)
+		this.isDead = false
+		this.needle = new Needle(this.getBaseNeedlePosition())
 	
 	}
 
@@ -108,12 +108,22 @@ class Player {
 		this.needle.update(timeDelta, this)
 	}
 
+	respawn(pos) {
+		this.position = pos
+		this.life = 20
+		this.isDead = false
+		console.log("Respawned", this)
+	}
+
 	attack() {
 		this.needle.isAttacking = true
 	}
 
 	onDamage(needle) {
 		this.life -= needle.attackPower
+		if (this.life <= 0) {
+			this.isDead = true
+		}
 	}
 
 	getBaseNeedlePosition() {
@@ -129,11 +139,17 @@ class Game {
 
 	updatePlayers(timeDelta) {
 		this.players.forEach(function (player) {
+
+			if (player.isDead) {
+				player.respawn(new Position(0, 0))
+				return
+			}
+
 			player.update(timeDelta)
 		})
 	}
 
-	checkDeath(player) {
+	checkDamage(player) {
 		this.players.forEach(function (p) {
 			if (p.id === player.id) { return }
 			let needlePos = p.needle.position
@@ -151,24 +167,18 @@ class Game {
 			if (absDistance < thresholdDistance) {
 				player.onDamage(p.needle)
 			}
-
-			// if (xDistance < thresholdDistance && yDistance < thresholdDistance) {
-			// 	// console.log("Player died on comp", player.id, xDistance, yDistance, thresholdDistance)
-			// }
-
-			// console.log("--", player.id, thresholdDistance, absDistance, xDistance, yDistance)
 		})
 	}
 
-	checkDeaths() {
+	updateDamage() {
 		this.players.forEach( (player) => {
-			this.checkDeath(player)
+			this.checkDamage(player)
 		})
 	}
 
 	update(timeDelta) {
 		this.updatePlayers(timeDelta)
-		this.checkDeaths()
+		this.updateDamage()
 	}
 
 	addPlayer(player) {
