@@ -22,6 +22,7 @@ class Needle {
 		this.movementLenght = 100
 		this.movementDuration = 2000
 		this.radius = 20
+		this.attackPower = 10
 	}
 
 	resetNeedle() {
@@ -81,12 +82,16 @@ class Player {
 		this.position = position
 		this.direction = (Math.PI) / 2 //0
 		this.speed = 0 //0.05
+		this.scale = 1
 		this.diameter = 200
-		this.radius = this.diameter / 2
-		// let needlePos = new Position(position.x, position.y + this.radius / 2)
-		// let needlePos = new Position(0, 0)
-		let needlePos = this.getBaseNeedlePosition()
-		this.needle = new Needle(needlePos)
+		// this.radius = this.diameter / 2
+		this.baseLife = 20
+		this.life = 20
+		this.isDead = false
+		this.hasBeenHit = false
+		this.needle = new Needle(this.getBaseNeedlePosition())
+
+		this.kills = 0
 	
 	}
 
@@ -103,20 +108,50 @@ class Player {
 		this.position.y += newY * Math.sin(this.direction)
 	}
 
+	updateScale() {
+		this.scale = this.life / this.baseLife
+	}
+
 	update(timeDelta) {
 		this.updatePosition(timeDelta)
+		this.updateScale()
 		this.needle.update(timeDelta, this)
+	}
+
+	respawn(pos) {
+		this.position = pos
+		this.life = 20
+		this.scale = 1
+		this.isDead = false
+		console.log("Respawned", this)
 	}
 
 	attack() {
 		this.needle.isAttacking = true
 	}
 
+	onDamage(needle) {
+		if (this.hasBeenHit) { return }
+
+		this.life -= needle.attackPower
+		this.hasBeenHit = true
+
+		if (this.life > 0) { return }
+
+		this.isDead = true
+
+	}
+
+	onScore() {
+		this.kills += 1
+	}
+
 	getBaseNeedlePosition() {
-		// return this.getNeedleBaseOffset()
-		// return new Position(0, 0)
-		// console.log("NEEDLE POSITION", this.position.x, this.radius, Math.cos(this.direction), this.position.y, this.radius , Math.sin(this.direction) )
-		return new Position(this.position.x + (this.radius * Math.cos(this.direction) ) , this.position.y + (this.radius * Math.sin(this.direction)) )
+		return new Position(this.position.x + (this.getRadius() * Math.cos(this.direction) ) , this.position.y + (this.getRadius() * Math.sin(this.direction)) )
+	}
+
+	getRadius() {
+		return this.diameter * this.scale / 2
 	}
 }
 
@@ -128,17 +163,23 @@ class Game {
 
 	updatePlayers(timeDelta) {
 		this.players.forEach(function (player) {
+
+			if (player.isDead) {
+				player.respawn(new Position(0, 0))
+				return
+			}
+
 			player.update(timeDelta)
 		})
 	}
 
-	checkDeath(player) {
+	checkDamage(player) {
 		this.players.forEach(function (p) {
 			if (p.id === player.id) { return }
 			let needlePos = p.needle.position
 			let needleRadius = p.needle.radius
 
-			let playerRadius = player.radius
+			let playerRadius = player.getRadius()
 			let playerPos = player.position
 
 			let xDistance = Math.abs(playerPos.x - needlePos.x)
@@ -148,26 +189,28 @@ class Game {
 			let thresholdDistance = needleRadius + playerRadius
 
 			if (absDistance < thresholdDistance) {
-				console.log("Player died absDistance", player.id, thresholdDistance, absDistance)
+				if (player.hasBeenHit ) { return }
+
+				player.onDamage(p.needle)
+
+				if (player.isDead) {
+					p.onScore()
+				}
+			} else {
+				player.hasBeenHit = false
 			}
-
-			// if (xDistance < thresholdDistance && yDistance < thresholdDistance) {
-			// 	// console.log("Player died on comp", player.id, xDistance, yDistance, thresholdDistance)
-			// }
-
-			// console.log("--", player.id, thresholdDistance, absDistance, xDistance, yDistance)
 		})
 	}
 
-	checkDeaths() {
+	updateDamage() {
 		this.players.forEach( (player) => {
-			this.checkDeath(player)
+			this.checkDamage(player)
 		})
 	}
 
 	update(timeDelta) {
 		this.updatePlayers(timeDelta)
-		this.checkDeaths()
+		this.updateDamage()
 	}
 
 	addPlayer(player) {
